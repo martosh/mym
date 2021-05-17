@@ -2,8 +2,9 @@
 import sys, argparse, pprint, re
 import os.path
 import warnings as w
+import mariadb as mdb
 from os import path
-#
+
 print("Start parsing file")
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -12,6 +13,25 @@ parser.add_argument( 'file', metavar='file name path',  help="give a file path t
 args = parser.parse_args()
 args.file = os.path.abspath(args.file)
 
+db_user_passwd = 'martosh';
+
+# Connect to MariaDB Platform
+try:
+    conn = mdb.connect(
+        user="martosh",
+        password=db_user_passwd,
+        host="127.0.0.1",
+        port=3306,
+        database="mindata"
+
+    )
+
+except mdb.Error as e:
+    print(f"Error connecting to MariaDB Platform: {e}")
+    sys.exit(1)
+
+# Get Cursor
+cur = conn.cursor()
 
 def main():
     if path.exists( args.file ) and path.getsize(args.file) > 1 :
