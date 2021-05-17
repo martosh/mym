@@ -33,7 +33,9 @@ except mdb.Error as e:
 # Get Cursor
 cur = conn.cursor()
 
+###################
 def main():
+###################
     if path.exists( args.file ) and path.getsize(args.file) > 1 :
         print("file exists " + args.file)
         #read file
@@ -48,24 +50,46 @@ def main():
     split_data =[];
     split_data = data.split( sep='###' );
 
+    parsed_data = {};
+
     for sdata in split_data:
         sdata = re.sub( '#', '', sdata );
         sdata = re.sub( r'\n+?', '\n', sdata );
         if not sdata or len(sdata) < 3:
             continue;
-        m = re.search( r'\d{4}\/\d{2}\/\d{2}', sdata )
-        t_date = '';
+        m = re.findall( r'\d{4}\/\d{2}\/\d{2}', sdata )
+        thought_date = '';
         if m:
-            t_date = m.group
+            thought_date = m[0];
+            #remove date from sdata
+            sdata = re.sub( r'\d{4}\/\d{2}\/\d{2}', '', sdata );
 
-        print(f'show me split data[{sdata}] for date[{t_date}]');
-    
+        p = re.compile( r'важно', re.I );
+
+        prio = 0;
+
+        if p.search( sdata):
+            prio = 1;
+            sdata = re.sub( r'Важно', '', sdata, flags=re.I);
+        
+        #print(f'show me split data[{sdata}] for date[{thought_date}]');
+        parsed_data = { "data": sdata, 'time': thought_date, 'prio': prio };
+        insert_data( **parsed_data ); 
 
 
+###################
 def open_file(file):
+###################
     print(f"about to read file[{file}]")
     with open( file, 'r' ) as f:
        data = f.read();
     return data
+
+###################
+def insert_data(data, time, prio):
+    print(f"start insert_data with params data[{data}] time[{time}] pri[{prio}]");
+    input();
+###################
+    #insert data from dict
 
 main()
