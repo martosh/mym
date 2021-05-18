@@ -31,7 +31,7 @@ except mdb.Error as e:
     sys.exit(1)
 
 # Get Cursor
-cur = conn.cursor()
+cursor = conn.cursor()
 
 ###################
 def main():
@@ -64,9 +64,8 @@ def main():
             #remove date from sdata
             sdata = re.sub( r'\d{4}\/\d{2}\/\d{2}', '', sdata );
 
-        p = re.compile( r'важно', re.I );
-
         prio = 0;
+        p = re.compile('важно', re.I );
 
         if p.search( sdata):
             prio = 1;
@@ -75,6 +74,8 @@ def main():
         #print(f'show me split data[{sdata}] for date[{thought_date}]');
         parsed_data = { "data": sdata, 'time': thought_date, 'prio': prio };
         insert_data( **parsed_data ); 
+
+    cursor.close();
 
 
 ###################
@@ -87,9 +88,25 @@ def open_file(file):
 
 ###################
 def insert_data(data, time, prio):
-    print(f"start insert_data with params data[{data}] time[{time}] pri[{prio}]");
-    input();
 ###################
+ #   input();
+    query = "INSERT INTO thoughts(create_date, create_time, importance, data) VALUES(%s,%s,%s,%s)";
+    #clean time before insert 
+    time = re.sub( r'[^\d]', '', time ); 
+    print(f"start insert_data with params data[{data}] time[{time}] pri[{prio}]");
+    if not time:
+        time = 0;
+        
+    values = ( time, '1200', prio, data );
+    cursor.execute( query, values );
+
+    if cursor.lastrowid:
+        print( "show me last inserted id ", cursor.lastrowid );
+    else:
+        print( "insert id not found!");
+
+    conn.commit();
     #insert data from dict
+
 
 main()

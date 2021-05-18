@@ -9,9 +9,9 @@ CREATE OR REPLACE TABLE thoughts (
     create_time int not null,
     importance int,
     data varchar(10000) not null,
-    calendar_id int not null,
-    catg_id int not null, 
-    owner int not null  
+    calendar_id int DEFAULT 0 not null ,
+    catg_id int DEFAULT 0 not null, 
+    owner int DEFAULT 0 not null  
 
 );
 
