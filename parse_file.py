@@ -18,28 +18,6 @@ args = parser.parse_args()
 args.file = os.path.abspath(args.file)
 print(f"Start parsing file[{args.file}]")
 
-#must be in file
-db_user_passwd = 'martosh';
-
-#############################
-# Connect to MariaDB Platform
-#############################
-try:
-    conn = mdb.connect(
-        user="martosh",
-        password=db_user_passwd,
-        host="127.0.0.1",
-        port=3306,
-        database="mindata"
-
-    )
-
-except mdb.Error as e:
-    print(f"Error connecting to MariaDB Platform: {e}")
-    sys.exit(1)
-
-# Get Cursor
-cursor = conn.cursor()
 
 ###################
 def main():
@@ -59,7 +37,8 @@ def main():
     split_data = data.split( sep='###' );
 
     parsed_data = {};
-
+    conn = db_conn('martosh', 'martosh' );
+    print( 'here'); 
     for sdata in split_data:
         sdata = re.sub( '#', '', sdata );
         sdata = re.sub( r'\n+?', '\n', sdata );
@@ -79,11 +58,12 @@ def main():
             prio = 1;
             sdata = re.sub( r'Важно', '', sdata, flags=re.I);
         
-        #print(f'show me split data[{sdata}] for date[{thought_date}]');
+        print(f'show me split data[{sdata}] for date[{thought_date}]');
         parsed_data = { "data": sdata, 'time': thought_date, 'prio': prio };
-        insert_data( **parsed_data ); 
+        insert_data( conn.cursor(), **parsed_data ); 
 
-    cursor.close();
+    conn.commit();
+    conn.cursor().close();
 
 
 ###################
@@ -94,8 +74,32 @@ def open_file(file):
        data = f.read();
     return data
 
+#############################
+# Connect to MariaDB Platform
+#############################
+#must be in file
+def db_conn(dbuser, dbpass, dbname='mindata'):
+   
+    try:
+        conn = mdb.connect(
+                user=dbuser,
+                password=dbpass,
+                host="127.0.0.1",
+                port=3306,
+                database=dbname,
+                )
+
+    except mdb.Error as e:
+        print(f"Error connecting to MariaDB Platform: {e}")
+        sys.exit(1)
+    else:
+        print(f"Connected to DB");
+
+    #cursor 
+    return conn
+
 ###################
-def insert_data(data, time, prio):
+def insert_data(cursor, data, time, prio):
 ###################
     # do some formatting  
     time = re.sub( r'[^\d]', '', time ); 
@@ -111,6 +115,8 @@ def insert_data(data, time, prio):
     print(f"start insert_data with params data[{data}] time[{time}] pri[{prio}]");
         
     values = ( time, '1200', prio, data );
+
+    query = "INSERT INTO thoughts(create_date, create_time, importance, data) VALUES(%s,%s,%s,%s)";
     cursor.execute( query, values );
 
     if cursor.lastrowid:
@@ -118,12 +124,11 @@ def insert_data(data, time, prio):
     else:
         print( "insert id not found!");
 
-    conn.commit();
     #insert data from dict
+
 
 
 ################
 # execution
 ################
-
 main()
