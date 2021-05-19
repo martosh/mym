@@ -1,21 +1,29 @@
 #!/usr/bin/python3
-import sys, argparse, pprint, re
+import sys, argparse, re
 import os.path
 import warnings as w
+#MariaDB driver
 import mariadb as mdb
+#read dir path
 from os import path
 
-print("Start parsing file")
-pp = pprint.PrettyPrinter(indent=4)
+##########################################################
+# read created file with thoughts or taks and insert it db
+##########################################################
+
 
 parser = argparse.ArgumentParser( description = "parse db file" )
 parser.add_argument( 'file', metavar='file name path',  help="give a file path to parse")
 args = parser.parse_args()
 args.file = os.path.abspath(args.file)
+print(f"Start parsing file[{args.file}]")
 
+#must be in file
 db_user_passwd = 'martosh';
 
+#############################
 # Connect to MariaDB Platform
+#############################
 try:
     conn = mdb.connect(
         user="martosh",
@@ -89,13 +97,18 @@ def open_file(file):
 ###################
 def insert_data(data, time, prio):
 ###################
- #   input();
-    query = "INSERT INTO thoughts(create_date, create_time, importance, data) VALUES(%s,%s,%s,%s)";
-    #clean time before insert 
+    # do some formatting  
     time = re.sub( r'[^\d]', '', time ); 
-    print(f"start insert_data with params data[{data}] time[{time}] pri[{prio}]");
+    data = data.strip();
+    data = re.sub( r'\s\s*', ' ', data);
+
+    if not data:
+        return;
+
     if not time:
         time = 0;
+
+    print(f"start insert_data with params data[{data}] time[{time}] pri[{prio}]");
         
     values = ( time, '1200', prio, data );
     cursor.execute( query, values );
@@ -108,5 +121,9 @@ def insert_data(data, time, prio):
     conn.commit();
     #insert data from dict
 
+
+################
+# execution
+################
 
 main()
